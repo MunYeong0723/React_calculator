@@ -3,8 +3,8 @@ import "./Calculator.css";
 
 import History from "./History";
 
-function operPrioirty(oper) {
-  switch (oper) {
+function operationPriority(operation) {
+  switch (operation) {
     case "+":
     case "-":
       return 1;
@@ -16,31 +16,31 @@ function operPrioirty(oper) {
   }
 }
 
-const calExp = (exp) => {
+const calculateExpression = (expression) => {
   let numStack = [];
-  let operStack = [];
+  let operationStack = [];
 
   let num = "";
-  for (let i = 0; i < exp.length; i++) {
-    if (exp.charAt(i) === "%") {
+  for (let i = 0; i < expression.length; i++) {
+    if (expression.charAt(i) === "%") {
       numStack.push(parseFloat(num) * 0.01);
       num = "";
       continue;
     }
-    if (operPrioirty(exp.charAt(i)) < 1 || (i === 0 && exp.charAt(i) === "-")) {
-      num += exp.charAt(i);
+    if (operationPriority(expression.charAt(i)) < 1 || (i === 0 && expression.charAt(i) === "-")) {
+      num += expression.charAt(i);
       continue;
     }
 
     if (num !== "") numStack.push(parseFloat(num));
     num = "";
 
-    if (operStack.length > 0) {
+    if (operationStack.length > 0) {
       // top의 우선순위가 같거나 높으면 먼저 계산
       // 그렇지 않으면 연산자 push
-      while (operPrioirty(operStack.slice(-1).toString()) >= operPrioirty(exp.charAt(i))) {
+      while (operationPriority(operationStack.slice(-1).toString()) >= operationPriority(expression.charAt(i))) {
         let tmp = 0;
-        switch (operStack.pop()) {
+        switch (operationStack.pop()) {
           case "+":
             tmp = numStack.pop() + numStack.pop();
             break;
@@ -59,14 +59,14 @@ const calExp = (exp) => {
         numStack.push(tmp);
       }
     }
-    operStack.push(exp.charAt(i));
+    operationStack.push(expression.charAt(i));
   }
 
   numStack.push(parseFloat(num));
 
-  while (operStack.length > 0) {
+  while (operationStack.length > 0) {
     let tmp = 0;
-    switch (operStack.pop()) {
+    switch (operationStack.pop()) {
       case "+":
         tmp = numStack.pop() + numStack.pop();
         break;
@@ -90,10 +90,11 @@ const calExp = (exp) => {
 };
 
 function Calculator() {
-  const [exp, setExp] = useState("");
+  const [expression, setExpression] = useState("");
   const [result, setResult] = useState("");
   const [historyArr, setHistoryArr] = useState([]);
 
+  // ref
   const flag = useRef(false);
   const setFlag = (bool) => {
     flag.current = bool;
@@ -118,28 +119,49 @@ function Calculator() {
     }
 
     setFlag(false);
-    setExp(`Ans = ${result}`);
+    setExpression(`Ans = ${result}`);
 
     if (!isNaN(input)) setResult(input);
   };
 
+  const onReset = () => {
+    if (flag.current) {
+      setExpression(`Ans = ${result}`);
+    }
+    setFlag(false);
+    setResult("");
+  };
+
+  const onRemove = () => {
+    if (flag.current) return;
+    setResult(result.slice(0, -1));
+  };
+
   const onGetResult = () => {
-    let tmp = calExp(result);
+    let tmp = calculateExpression(result);
     addHistory(result, tmp);
 
-    setExp(result + "=");
+    setExpression(result + "=");
     setResult(tmp);
+  };
+
+  const handleCallBack = (childData) => {
+    if (flag.current) {
+      setExpression(`Ans = ${result}`);
+    }
+    setFlag(false);
+    setResult(childData);
   };
 
   return (
     <div className="root">
       <div className="calculator">
         <div>
-          <div className="expression">{exp}</div>
+          <div className="expression">{expression}</div>
           <div className="result">{result}</div>
         </div>
         <div>
-          <div className="btnLine">
+          <div className="buttonLine">
             <button
               className="button"
               onClick={() => {
@@ -148,25 +170,14 @@ function Calculator() {
             >
               %
             </button>
-            <button
-              className="button"
-              onClick={() => {
-                setResult(result.slice(0, -1));
-              }}
-            >
+            <button className="button" onClick={onRemove}>
               CE
             </button>
-            <button
-              className="button"
-              onClick={() => {
-                setResult("");
-                setExp("");
-              }}
-            >
+            <button className="button" onClick={onReset}>
               AC
             </button>
           </div>
-          <div className="btnLine">
+          <div className="buttonLine">
             <button
               className="button"
               onClick={() => {
@@ -200,7 +211,7 @@ function Calculator() {
               /
             </button>
           </div>
-          <div className="btnLine">
+          <div className="buttonLine">
             <button
               className="button"
               onClick={() => {
@@ -234,7 +245,7 @@ function Calculator() {
               *
             </button>
           </div>
-          <div className="btnLine">
+          <div className="buttonLine">
             <button
               className="button"
               onClick={() => {
@@ -268,7 +279,7 @@ function Calculator() {
               -
             </button>
           </div>
-          <div className="btnLine">
+          <div className="buttonLine">
             <button
               className="button"
               onClick={() => {
@@ -301,14 +312,7 @@ function Calculator() {
       </div>
       <div className="historyAll">
         {historyArr.map((history) => (
-          <History
-            exp={history.hisExp}
-            result={history.hisResult}
-            parentCallback={(childData) => {
-              setExp("");
-              setResult(childData);
-            }}
-          />
+          <History exp={history.hisExp} result={history.hisResult} parentCallback={handleCallBack} />
         ))}
       </div>
     </div>

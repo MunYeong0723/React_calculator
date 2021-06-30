@@ -4,14 +4,12 @@ import "./History.css";
 function History({ exp, result, parentCallback }) {
   const onTrigger = (str) => {
     parentCallback(str);
-
-    console.log(`str : ${str}`);
   };
 
   return (
     <div className="history">
       <button
-        className="historyBtn"
+        className="historyButton"
         onClick={() => {
           onTrigger(exp);
         }}
@@ -20,7 +18,7 @@ function History({ exp, result, parentCallback }) {
       </button>
       <p> = </p>
       <button
-        className="historyBtn"
+        className="historyButton"
         onClick={() => {
           onTrigger(result);
         }}

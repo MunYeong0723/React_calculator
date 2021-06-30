@@ -1,0 +1,39 @@
+.root {
+  display: flex;
+}
+
+.calculator {
+  width: auto;
+}
+
+.historyAll {
+  display: flex;
+  flex-direction: column;
+  margin-left: 50px;
+  padding: 5px;
+}
+
+.expression {
+  color: gray;
+  height: 50px;
+  font-size: 100%;
+  width: auto;
+}
+
+.result {
+  height: 100px;
+  font-size: 200%;
+  width: auto;
+}
+
+.button {
+  margin: 5px;
+  height: 50px;
+  width: 100px;
+}
+
+.btnLine {
+  display: flex;
+  justify-content: space-between;
+  width: 300px;
+}

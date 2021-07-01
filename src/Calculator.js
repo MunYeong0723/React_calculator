@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import "./Calculator.css";
 
 import History from "./History";
@@ -94,34 +94,34 @@ function Calculator() {
   const [result, setResult] = useState("");
   const [historyArr, setHistoryArr] = useState([]);
 
+  useEffect(() => {
+    window.addEventListener("keydown", onPressedKeyboard);
+    return () => window.removeEventListener("keydown", onPressedKeyboard);
+  });
+
   // ref
   const flag = useRef(false);
   const setFlag = (bool) => {
     flag.current = bool;
   };
 
-  const addHistory = (exp, result) => {
-    setHistoryArr([
-      ...historyArr,
-      {
-        hisExp: exp,
-        hisResult: result,
-      },
-    ]);
-    setFlag(true);
-  };
-
   const onChange = (input) => {
-    setResult(result + input);
+    let tmpResult = result + input;
+
     if (!flag.current) {
-      if (result.slice(-1) === "%") setResult(result + "*" + input);
+      if (!isNaN(input) && result.slice(-1) === "%") tmpResult = result + "*" + input;
+      // 연산자가 2번 연속 나오는 경우
+      if(input !== '-' && isNaN(result.slice(-1)) && isNaN(input)) tmpResult = result.slice(0, -1) + input;
+      // 맨 앞에 연산자가 나오는 경우
+      if(input !== '-' && isNaN(input) && result.length === 0) tmpResult = "0" + input;
+      setResult(tmpResult);
       return;
     }
-
+    if (!isNaN(input)) tmpResult = input;
+    
     setFlag(false);
-    setExpression(`Ans = ${result}`);
-
-    if (!isNaN(input)) setResult(input);
+    setExpression(`Ans = ${result}`);    
+    setResult(tmpResult);
   };
 
   const onReset = () => {
@@ -151,6 +151,49 @@ function Calculator() {
     }
     setFlag(false);
     setResult(childData);
+  };
+
+  const addHistory = (exp, result) => {
+    setHistoryArr([
+      ...historyArr,
+      {
+        hisExp: exp,
+        hisResult: result,
+      },
+    ]);
+    setFlag(true);
+  };
+
+  // keyboard effect
+  const onPressedKeyboard = (event) => {
+    // 숫자 || 연산자 || % -> onChange()
+    // Backspace -> CE
+    // Enter -> calculate result
+    // Escape -> AC
+    if(!isNaN(event.key))
+      onChange(event.key);
+
+    switch(event.key) {
+      case "+":
+      case "-":
+      case "/":
+      case "*":
+      case "%":
+      case ".":
+        onChange(event.key);
+        break;
+      case "Backspace" :
+        onRemove();
+        break;
+      case "Enter" :
+        onGetResult();  
+        break;
+      case "Escape":
+        onReset();  
+        break;
+      default:
+    }
+    
   };
 
   return (
@@ -311,8 +354,8 @@ function Calculator() {
         </div>
       </div>
       <div className="historyAll">
-        {historyArr.map((history) => (
-          <History exp={history.hisExp} result={history.hisResult} parentCallback={handleCallBack} />
+        {historyArr.map((history, index) => (
+          <History key={index} exp={history.hisExp} result={history.hisResult} parentCallback={handleCallBack} />
         ))}
       </div>
     </div>

@@ -100,20 +100,50 @@ function Calculator() {
   });
 
   // ref
+  // result를 초기화하기 위한 flag
   const flag = useRef(false);
   const setFlag = (bool) => {
     flag.current = bool;
   };
+  // 연속되는 연산자 체크
+  // true라면 더 이상 연산자 입력되지 않음
+  const minusFlag = useRef(false);
+  const setMinusFlag = (bool) => {
+    minusFlag.current = bool;
+  }
 
   const onChange = (input) => {
     let tmpResult = result + input;
 
     if (!flag.current) {
+      if(isNaN(input)){
+        if(minusFlag.current) return;
+        // 연산자가 2번 연속 오는 경우
+        if(isNaN(result.slice(-1))) {
+          if(input === '-' && (result.slice(-1) === "*" || result.slice(-1) === "/")){
+            tmpResult = result + input;
+            setMinusFlag(true);
+          }
+          else {
+            tmpResult = result.slice(0, -1) + input;
+            setMinusFlag(false);
+          }
+        }
+        // 맨 앞에 연산자가 오는 경우
+        if(result.length === 0) {
+          if(input !== '-') tmpResult = "0" + input;
+          else {
+            setMinusFlag(true);
+          }
+        }
+      }
+      else {
+        setMinusFlag(false);
+      }
+      // %이 오는 경우
       if (!isNaN(input) && result.slice(-1) === "%") tmpResult = result + "*" + input;
-      // 연산자가 2번 연속 나오는 경우
-      if(input !== '-' && isNaN(result.slice(-1)) && isNaN(input)) tmpResult = result.slice(0, -1) + input;
-      // 맨 앞에 연산자가 나오는 경우
-      if(input !== '-' && isNaN(input) && result.length === 0) tmpResult = "0" + input;
+      
+      // if(input !== '-' && isNaN(input) && result.length === 0) tmpResult = "0" + input;
       setResult(tmpResult);
       return;
     }
@@ -129,20 +159,23 @@ function Calculator() {
       setExpression(`Ans = ${result}`);
     }
     setFlag(false);
+    setMinusFlag(false);
     setResult("");
   };
 
   const onRemove = () => {
+    setMinusFlag(false);
     if (flag.current) return;
     setResult(result.slice(0, -1));
   };
 
   const onGetResult = () => {
     let tmp = calculateExpression(result);
-    addHistory(result, tmp);
-
-    setExpression(result + "=");
+    if(!isNaN(tmp)) {
+      addHistory(result, tmp);
+      setExpression(result + "=");
     setResult(tmp);
+    }
   };
 
   const handleCallBack = (childData) => {
